@@ -31,7 +31,7 @@ export async function shortenUrl(req, res) {
 
 		await connection.query(
 			`
-        INSERT INTO urls ("userId", "longUrl", "shortUrl")
+        INSERT INTO urls ("userId", url, "shortUrl")
         VALUES ($1, $2, $3);
         `,
 			[userId, url, shortUrl]
@@ -50,7 +50,7 @@ export async function getUrlById(req, res) {
 	try {
 		const findUrl = await connection.query(
 			`
-        SELECT id, "shortUrl", "longUrl" AS "url"
+        SELECT id, "shortUrl", url
         FROM urls
         WHERE id = $1;
         `,
@@ -88,18 +88,18 @@ export async function redirectUrl(req, res) {
 		}
 
 		const urlId = urlInfo.rows[0].id;
-		const newVisits = urlInfo.rows[0].visits + 1;
+		const newVisits = urlInfo.rows[0].visitCount + 1;
 
 		await connection.query(
 			`
         UPDATE urls
-        SET visits = $1
+        SET "visitCount" = $1
         WHERE id = $2;
         `,
 			[newVisits, urlId]
 		);
 
-		res.redirect(302, urlInfo.rows[0].longUrl);
+		res.redirect(302, urlInfo.rows[0].url);
 	} catch (error) {
 		console.log(error);
 		res.sendStatus(500);
