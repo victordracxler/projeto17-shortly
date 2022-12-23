@@ -45,3 +45,22 @@ export async function getMe(req, res) {
 		res.sendStatus(500);
 	}
 }
+
+export async function rankUsers(req, res) {
+	try {
+		const ranking = await connection.query(`
+        SELECT users.id, users.name, COUNT(urls."userId") AS "linksCount", SUM(COALESCE(urls."visitCount", 0)) AS "visitCount"
+        FROM users
+        LEFT JOIN urls
+        ON users.id = urls."userId"
+        GROUP BY users.id
+        ORDER BY "visitCount" DESC
+        LIMIT 10;
+        `);
+
+		res.status(200).send(ranking.rows);
+	} catch (error) {
+		console.log(error);
+		res.sendStatus(500);
+	}
+}
