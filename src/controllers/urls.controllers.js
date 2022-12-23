@@ -63,5 +63,44 @@ export async function getUrlById(req, res) {
 		}
 
 		res.status(200).send(findUrl.rows[0]);
-	} catch (error) {}
+	} catch (error) {
+		console.log(error);
+		res.sendStatus(500);
+	}
+}
+
+export async function redirectUrl(req, res) {
+	const { shortUrl } = req.params;
+
+	try {
+		const urlInfo = await connection.query(
+			`
+        SELECT *
+        FROM urls
+        WHERE "shortUrl" = $1;
+        `,
+			[shortUrl]
+		);
+
+		if (urlInfo.rows.length === 0) {
+			res.sendStatus(404);
+			return;
+		}
+
+		const urlId = urlInfo.rows[0].id;
+		const userId = urlInfo.rows[0].userId;
+
+		await connection.query(
+			`
+        INSERT INTO visits ("userId", "urlId")
+        VALUES ($1, $2);
+        `,
+			[userId, urlId]
+		);
+
+		res.redirect(302, urlInfo.rows[0].longUrl);
+	} catch (error) {
+		console.log(error);
+		res.sendStatus(500);
+	}
 }
